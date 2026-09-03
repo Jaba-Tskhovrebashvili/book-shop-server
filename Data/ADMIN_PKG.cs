@@ -31,6 +31,25 @@ namespace FirstProject.Data
             return regex.IsMatch(email);
         }
 
+        public async Task<Admin> GetProfile(int id)
+        {
+            try
+            {
+                var findAdmin=await this._context.admin.FirstOrDefaultAsync(x => x.Id == id);
+                var admin = new Admin { 
+                Id = findAdmin.Id,
+                Name = findAdmin.Name,
+                Surname = findAdmin.Surname,
+                Email = findAdmin.Email,
+                };
+                return admin;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
 
         public async Task<bool> AdminVerify(Admin admin)
         {

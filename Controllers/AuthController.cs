@@ -1,6 +1,7 @@
 ﻿using Azure.Core;
 using FirstProject.Data;
 using FirstProject.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,6 +21,21 @@ namespace FirstProject.Controllers
         public IActionResult Index()
         {
             return Ok("Auth API is working!");
+        }
+
+
+        [HttpGet("my-profile/{adminId}")]
+        [Authorize]
+        async public Task<IActionResult> GetProfile(int adminId) {
+            try
+            {
+                var profile=await this._admin_pkg.GetProfile(adminId);
+                return StatusCode(200, new { success = true, profile });
+            } catch (Exception ex) {
+
+                _logger.LogError(ex.Message);
+                return StatusCode(500, new { message = ex.Message, success = false });
+            }
         }
 
         [HttpPost("email-verify")]
@@ -59,7 +75,7 @@ namespace FirstProject.Controllers
             try
             {
                 var admin = await this._admin_pkg.AdminSignIn(adminSignIn.Email, adminSignIn.Password);
-                return StatusCode(200, new { success = true, Admin=admin.admin, Token=admin.Token });
+                return StatusCode(200, new { success = true, Admin=admin.admin, token=admin.Token });
             }
             catch (Exception ex)
             {
