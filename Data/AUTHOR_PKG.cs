@@ -14,6 +14,103 @@ namespace FirstProject.Data
             this._authorHelper= authorHelper;
         }
 
+        public async Task<AuthorDto> GetAuthor(int authorId)
+        {
+            try
+            {
+
+                var author = await this._context.author
+                    .Where(a=>a.Id==authorId)
+                    .Select(a => new AuthorDto
+                    {
+                        Id = a.Id,
+                        Name = a.Name,
+                        Surname = a.Surname,
+                        PhoneNumber = a.PhoneNumber,
+                        Email = a.Email,
+                        Sex = a.Sex.sex,
+                        PersonalNumber = a.PersonalNumber,
+                        BirthDate = a.BirthDate,
+                        Country = a.Country.name,
+                        City = a.City.name,
+                        CityId = a.CityId,
+                        CountryId = a.CountryId,
+                        SexId = a.SexId,
+                    })
+                    .ToListAsync();
+
+                return author[0];
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public async Task<GetAuthors> GetSelectAuthors(string? search, string? authorselect, int page)
+        {
+            int pageSize = 6;
+            try
+            {
+                var authorArray = new List<long>();
+                if (!string.IsNullOrEmpty(authorselect))
+                {
+                    string[] subs = authorselect.Split(',');
+                    foreach (var sub in subs)
+                    {
+                        authorArray.Add(Convert.ToInt32(sub));
+                    }
+
+                }
+
+                var query = this._context.author
+                           .Where(x => (string.IsNullOrEmpty(search) || EF.Functions.Like((x.Name + ' ' + x.Surname).ToLower(), $"%{search.ToLower()}%")) &&
+                           (string.IsNullOrEmpty(authorselect) || !authorArray.Contains(x.Id))
+                           );
+
+                var count = await query.CountAsync();
+
+
+                var authors = await query
+                    .OrderByDescending(x => x.Id)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(a => new AuthorDto
+                    {
+                        Id = a.Id,
+                        Name = a.Name,
+                        Surname = a.Surname,
+                        PhoneNumber = a.PhoneNumber,
+                        Email = a.Email,
+                        Sex = a.Sex.sex,
+                        PersonalNumber = a.PersonalNumber,
+                        BirthDate = a.BirthDate,
+                        Country = a.Country.name,
+                        City = a.City.name,
+                        CityId = a.CityId,
+                        CountryId = a.CountryId,
+                        SexId = a.SexId,
+                    })
+                    .ToListAsync();
+
+
+                int totalPages = (int)Math.Ceiling((double)count / pageSize);
+
+                var getAuthors = new GetAuthors
+                {
+                    Authors = authors,
+                    TotalPages = totalPages
+                };
+
+                return getAuthors;
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
 
         public async Task<GetAuthors> GetAuthors(string? search, int? cityId, int? countryId,int? sexId,int page)
         {
@@ -23,7 +120,7 @@ namespace FirstProject.Data
             {
 
                 var query = this._context.author
-                           .Where(x => (string.IsNullOrEmpty(search) || EF.Functions.Like(x.Name, $"{search.ToLower()}%")) &&
+                           .Where(x => (string.IsNullOrEmpty(search) || EF.Functions.Like((x.Name + ' '+ x.Surname).ToLower(), $"%{search.ToLower()}%")) &&
                            (countryId == null || x.CountryId == countryId) &&
                            (cityId == null || x.CityId == cityId) && (sexId == null || x.SexId==sexId));
 
@@ -45,7 +142,10 @@ namespace FirstProject.Data
                         PersonalNumber=a.PersonalNumber,
                         BirthDate=a.BirthDate,
                         Country = a.Country.name,
-                        City = a.City.name
+                        City = a.City.name,
+                        CityId=a.CityId,
+                        CountryId=a.CountryId,
+                        SexId=a.SexId,
                         })
                     .ToListAsync();
 
@@ -118,6 +218,14 @@ namespace FirstProject.Data
                 {
                     throw new Exception("დაფიქსირდა შეცდომა");
 
+                }
+
+                var emailExists = await _context.author
+                       .AnyAsync(x => x.Id != authorId && x.Email == author.Email);
+
+                if (emailExists)
+                {
+                    throw new Exception("ეს Email უკვე გამოყენებულია");
                 }
 
                 var authorValidate = await this._authorHelper.AuthorValidate(author);
@@ -241,7 +349,6 @@ namespace FirstProject.Data
 
 
                 var countries = await query
-                    .OrderByDescending(x => x.Id)
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
                     .Select(a => new Country

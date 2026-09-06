@@ -72,6 +72,22 @@ namespace FirstProject.Helper
                 {
                     throw new Exception("ნომერი უნდა იყოს 4 სიმბოლოზე მეტი და 50 ზე ნაკლები");
                 }
+
+                if (author.SexId ==null || author.SexId==0)
+                {
+                    throw new Exception("მიუთითეთ სქესი");
+                }
+
+                if (author.CountryId == null || author.CountryId == 0)
+                {
+                    throw new Exception("მიუთითეთ ქვეყანა");
+                }
+
+                if (author.CityId == null || author.CityId == 0)
+                {
+                    throw new Exception("მიუთითეთ ქალაქი");
+                }
+
                 return author;
 
             }

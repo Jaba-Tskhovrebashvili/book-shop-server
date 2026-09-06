@@ -39,6 +39,15 @@ namespace FirstProject.Helper
                     throw new Exception("მიუთითეთ მინიმუმ 1 ავტორი");
                 }
 
+                if (addProduct.typeId == 0 || addProduct.typeId==null)
+                {
+                    throw new Exception("მიუთითეთ პროდუქტს ტიპი");
+                }
+                if (addProduct.publishId == 0 || addProduct.publishId == null)
+                {
+                    throw new Exception("მიუთითეთ პროდუქტს გამომცემლობა");
+                }
+
                 return addProduct;
 
             }

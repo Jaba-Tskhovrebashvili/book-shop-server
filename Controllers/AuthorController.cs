@@ -16,13 +16,46 @@ namespace FirstProject.Controllers
          this._logger = logger;
         }
 
+        [HttpGet("get-author/{authorId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAuthor(int authorId)
+        {
+            try
+            {
+
+                var authors = await this._author_pkg.GetAuthor(authorId);
+                return StatusCode(200, new { success = true, authors });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(500, new { message = ex.Message, success = false });
+            }
+        }
+
         [HttpGet("get-authors")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAuthors(string? search,int? cityId,int? countryId,int? sexId, int page)
         {
             try
             {
                 
                 var authors = await this._author_pkg.GetAuthors(search,cityId,countryId, sexId, page);
+                return StatusCode(200, new { success = true, authors });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(500, new { message = ex.Message, success = false });
+            }
+        }
+        [HttpGet("get-select-authors")]
+        public async Task<IActionResult> GetSelectAuthors(string? search,string? authorselect, int page)
+        {
+            try
+            {
+
+                var authors = await this._author_pkg.GetSelectAuthors(search, authorselect, page);
                 return StatusCode(200, new { success = true, authors });
             }
             catch (Exception ex)
