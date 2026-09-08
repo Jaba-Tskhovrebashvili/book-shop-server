@@ -172,11 +172,16 @@ namespace FirstProject.Data
             try
             {
 
-                var findUser = await this._context.author.FirstOrDefaultAsync(x => x.Email == author.Email);
-                if (findUser != null)
+                var findUser = await this._context.author.AnyAsync(x => x.Email == author.Email);
+                if (findUser)
                 {
                     throw new Exception("მსგავსი მეილით ექაუნთი უკვე არსებობს");
 
+                }
+                var findpersonalNumber = await this._context.author.Where(x => x.PersonalNumber == author.PersonalNumber).AnyAsync();
+                if (findpersonalNumber)
+                {
+                    throw new Exception("მსგავსი პირადი ნომრით ექაუნთი უკვე არსებობს");
                 }
                 var authorValidate =await this._authorHelper.AuthorValidate(author);
 
@@ -227,6 +232,14 @@ namespace FirstProject.Data
                 {
                     throw new Exception("ეს Email უკვე გამოყენებულია");
                 }
+
+                var findpersonalNumber = await this._context.author.Where(x => x.Id != authorId && x.PersonalNumber == author.PersonalNumber).AnyAsync();
+
+                if (findpersonalNumber)
+                {
+                    throw new Exception("ეს პირადი ნომერი გამოყენებულია");
+                }
+
 
                 var authorValidate = await this._authorHelper.AuthorValidate(author);
 

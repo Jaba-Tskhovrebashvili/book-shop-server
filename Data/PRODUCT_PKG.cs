@@ -12,8 +12,8 @@ namespace FirstProject.Data
         private readonly ProductHelper _productHelper;
         public PRODUCT_PKG(AddDbContext context, ProductHelper productHelper)
         {
-            this._context= context;
-            this._productHelper= productHelper;
+            this._context = context;
+            this._productHelper = productHelper;
         }
 
         public async Task<object> AuthorProducts(int authorId, int page)
@@ -51,9 +51,50 @@ namespace FirstProject.Data
 
                 var totalCount = (int)Math.Ceiling((double)count / pageSize);
 
-                return new { products= result, totalCount};
-                
-                
+                return new { products = result, totalCount };
+
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public async Task<Product> GetProduct(int productId)
+        {
+            try
+            {
+                var product = await this._context.product
+                               .Where(x => x.Id == productId)
+                                .Select(product => new Product
+                                {
+                                    Id = product.Id,
+                                    Name = product.Name,
+                                    Annotation = product.Annotation,
+                                    typeId = product.typeId,
+                                    Product_Type = product.Product_Type,
+                                    ISBN = product.ISBN,
+                                    release_date = product.release_date,
+                                    publishId = product.publishId,
+                                    publishing_house = product.publishing_house,
+                                    page_quantity = product.page_quantity,
+                                    address = product.address,
+                                    Created_At = product.Created_At,
+                                    Updated_At = product.Updated_At,
+                                    Authors = product.Authors.Select(x => new Author
+                                    {
+                                        Id = x.Id,
+                                        Name = x.Name,
+                                        Surname = x.Surname
+                                    }).ToList()
+
+                                })
+                            .FirstOrDefaultAsync();
+    
+                return product;
+
+
             }
             catch (Exception ex)
             {
@@ -67,15 +108,15 @@ namespace FirstProject.Data
             int pageSize = 5;
             try
             {
-                var query =  this._context.product
+                var query = this._context.product
                                .Where(x => (string.IsNullOrEmpty(search) || EF.Functions.Like((x.Name).ToLower(), $"%{search.ToLower()}%")) &&
                                (typeId == null || x.typeId == typeId) && (publishId == null || x.publishId == publishId));
-                               
+
 
                 var count = await query.CountAsync();
 
                 var products = await query
-                    .OrderByDescending(x=>x.Id)
+                    .OrderByDescending(x => x.Id)
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
                     .Select(product => new Product
@@ -121,28 +162,31 @@ namespace FirstProject.Data
             {
 
                 var checkISBN = await this._context.product.FirstOrDefaultAsync(x => x.ISBN == addProduct.ISBN);
-                if (checkISBN != null) {
+                if (checkISBN != null)
+                {
                     throw new Exception("მსგავსი ISBN ით პროდუქტი უკვე დამატებულია");
                 }
 
-                var productValidate= await this._productHelper.ProductValidate(addProduct);
-                var createProduct = new Product {
-                     Name= productValidate.Name,
-                    Annotation= productValidate.Annotation,
-                    typeId= productValidate.typeId,
-                    ISBN= productValidate.ISBN,
-                    release_date= productValidate.release_date,
-                    publishId= productValidate.publishId,
-                    page_quantity= productValidate.page_quantity,
-                    address= productValidate.address,
-                    Created_At= DateTime.Now,
-                    Updated_At= DateTime.Now
+                var productValidate = await this._productHelper.ProductValidate(addProduct);
+                var createProduct = new Product
+                {
+                    Name = productValidate.Name,
+                    Annotation = productValidate.Annotation,
+                    typeId = productValidate.typeId,
+                    ISBN = productValidate.ISBN,
+                    release_date = productValidate.release_date,
+                    publishId = productValidate.publishId,
+                    page_quantity = productValidate.page_quantity,
+                    address = productValidate.address,
+                    Created_At = DateTime.Now,
+                    Updated_At = DateTime.Now
                 };
-               
+
                 foreach (var author in productValidate.Authors)
                 {
                     var findAuthor = await this._context.author.FirstOrDefaultAsync(x => x.Id == author.id);
-                    if (findAuthor == null) {
+                    if (findAuthor == null)
+                    {
                         throw new Exception("დაფიქსირდა შეცდომა");
                     }
                     createProduct.Authors.Add(findAuthor);
@@ -163,12 +207,21 @@ namespace FirstProject.Data
         {
             try
             {
+
+                var findISBN = await this._context.product.AnyAsync(x => x.Id != productId && x.ISBN == addProduct.ISBN);
+                if (findISBN)
+                {
+                    throw new Exception("მსგავსი ISBN უკვე მინიჭებული აქვს სხვა პროდუქტს");
+                }
+
                 var productValidate = await this._productHelper.ProductValidate(addProduct);
 
-                var findProduct=await this._context.product.Include(p=>p.Authors).FirstOrDefaultAsync(x => x.Id == productId);
-                if (findProduct == null) {
+                var findProduct = await this._context.product.Include(p => p.Authors).FirstOrDefaultAsync(x => x.Id == productId);
+                if (findProduct == null)
+                {
                     throw new Exception("დაფიქსირდა შეცდომა");
                 }
+               
 
                 findProduct.Name = productValidate.Name;
                 findProduct.Annotation = productValidate.Annotation;
@@ -204,7 +257,7 @@ namespace FirstProject.Data
         {
             try
             {
-                var findProduct = await this._context.product.FirstOrDefaultAsync(x=>x.Id==productId);
+                var findProduct = await this._context.product.FirstOrDefaultAsync(x => x.Id == productId);
                 if (findProduct == null)
                 {
                     throw new Exception("დაფიქსირდა შეცდომა");
@@ -213,7 +266,8 @@ namespace FirstProject.Data
                 this._context.product.Remove(findProduct);
                 await this._context.SaveChangesAsync();
                 return true;
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 throw new Exception(ex.Message);
             }
@@ -231,11 +285,11 @@ namespace FirstProject.Data
                            .Where(x => (string.IsNullOrEmpty(search) || EF.Functions.Like(x.name, $"{search.ToLower()}%")))
                             .Select(a => new Product_Type
                             {
-                               Id = a.Id,
+                                Id = a.Id,
                                 name = a.name
                             })
                             .ToListAsync();
-                    return new {product_types= query };
+                return new { product_types = query };
 
             }
             catch (Exception ex)

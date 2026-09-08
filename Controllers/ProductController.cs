@@ -17,7 +17,7 @@ namespace FirstProject.Controllers
         }
 
         [HttpGet("author-products")]
-       //[Authorize(Roles = "Admin")]
+       [Authorize(Roles = "Admin")]
         async public Task<IActionResult> AuthorProducts(int authorId,int page)
         {
             try
@@ -34,13 +34,30 @@ namespace FirstProject.Controllers
         }
 
         [HttpGet("get-products")]
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         async public Task<IActionResult> GetProducts(int? typeId,int? publishId,string? search, int page)
         {
             try
             {
                 var products = await this._product_pkg.GetProducts(typeId, publishId, search, page);
                 return StatusCode(200, new { success = true, products });
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return StatusCode(500, new { message = ex.Message, success = false });
+            }
+        }
+
+        [HttpGet("get-product/{productId}")]
+        [Authorize(Roles = "Admin")]
+        async public Task<IActionResult> GetProduct(int productId)
+        {
+            try
+            {
+                var product = await this._product_pkg.GetProduct(productId);
+                return StatusCode(200, new { success = true, product });
 
             }
             catch (Exception ex)
